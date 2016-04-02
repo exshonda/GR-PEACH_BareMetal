@@ -1,0 +1,77 @@
+ifneq (,$(findstring /cygdrive/,$(PATH)))
+    UNAME := Cygwin
+else
+ifeq ($(OS),Windows_NT)
+    UNAME := Windows
+else
+ifeq ($(UNAME),Linux)
+    UNAME := Linux
+ifeq ($(UNAME),Darwin)
+    UNAME := Darwin
+endif
+endif
+endif
+endif
+
+ifeq ($(UNAME), Cygwin)
+GNUTOOL     = arm-none-eabi
+else
+GNUTOOL     = arm-atollic-eabi
+endif
+
+CC      = $(GNUTOOL)-gcc
+NM      = $(GNUTOOL)-nm
+OBJCOPY = $(GNUTOOL)-objcopy
+
+CFLAGS  += -g -mlittle-endian -mcpu=cortex-a9 -O2 -I$(BASE_DIR) 
+LDFLAGS += $(MACHINE) -static -nostdlib -lgcc
+
+ifeq ($(EXECUTE_ON),ROM)
+LDSCRIPT = $(BASE_DIR)/gr_peach_rom.ld
+CFLAGS  += -DEXECUTE_ON_ROM
+OBJS += sf_boot.o
+else
+LDSCRIPT = $(BASE_DIR)/gr_peach_ram.ld
+CFLAGS  += -DEXECUTE_ON_RAM
+endif
+
+vpath %.c $(BASE_DIR)
+vpath %.S $(BASE_DIR)
+
+OBJS += init.o gic.o
+
+all: $(TARGET_NAME).bin
+
+$(TARGET_NAME).bin: $(TARGET_NAME).elf
+	$(OBJCOPY) -O binary -S $(TARGET_NAME).elf $(TARGET_NAME).bin
+
+$(TARGET_NAME).elf : start.o $(OBJS)
+	$(CC) start.o $(OBJS) $(LDFLAGS) -T $(LDSCRIPT)  -o $(TARGET_NAME).elf
+
+%.o: %.S
+	$(CC) -c $(CFLAGS) $<
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $<
+
+clean:
+	rm -f $(TARGET_NAME).elf $(TARGET_NAME).map $(OBJS) start.o $(TARGET_NAME).bin
+
+OPENOCD_DIR         = c:/arm/OpenOCD/0.10.0-201601101000-dev
+OPENOCD_PATH        = ${OPENOCD_DIR}/bin/openocd.exe
+OPENOCD_SCRIPT_PATH = ${OPENOCD_DIR}/scripts
+OPENOCD_SCRIPT1     = ${OPENOCD_DIR}/scripts/interface/cmsis-dap.cfg
+OPENOCD_SCRIPT2     = ${OPENOCD_DIR}/scripts/target/renesas_rza1h_swd.cfg 
+GDB = arm-gdb_m0.exe
+
+ifeq ($(EXECUTE_ON),ROM)
+	GDBINI = gdb_rom.ini
+else
+	GDBINI = gdb_ram.ini
+endif
+
+ocd: $(TARGET_NAME).bin
+	cygstart `cygpath -u "$(OPENOCD_PATH)"` '-s "$(OPENOCD_SCRIPT_PATH)"' '-f "$(OPENOCD_SCRIPT1)"' '-f "$(OPENOCD_SCRIPT2)"'
+
+db: $(TARGET_NAME).bin
+	$(GDB) $(TARGET_NAME).elf -x $(BASE_DIR)/${GDBINI}
