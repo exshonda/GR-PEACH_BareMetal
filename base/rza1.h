@@ -94,7 +94,7 @@
 /* 汎用入出力ポート */
 #define ASP_PORT_BASE           0xFCFE3000
 #define ASP_PORT_P_OFFSET       0x0000
-#define ASP_PORT_PSR_OFFSET     0x0200
+#define ASP_PORT_PSR_OFFSET     0x0100
 #define ASP_PORT_PPR_OFFSET     0x0200
 #define ASP_PORT_PM_OFFSET      0x0300
 #define ASP_PORT_PMC_OFFSET     0x0400
