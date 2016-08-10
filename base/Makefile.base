@@ -24,7 +24,7 @@ NM      = $(GNUTOOL)-nm
 OBJCOPY = $(GNUTOOL)-objcopy
 
 CFLAGS  += -g -mlittle-endian -mcpu=cortex-a9 -O2 -I$(BASE_DIR) 
-LDFLAGS += $(MACHINE) -static -nostdlib -lgcc
+LDFLAGS += -mcpu=cortex-a9 -static -nostdlib -lgcc
 
 ifeq ($(EXECUTE_ON),ROM)
 LDSCRIPT = $(BASE_DIR)/gr_peach_rom.ld
