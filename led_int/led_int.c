@@ -63,24 +63,25 @@ init_push(void){
 void
 init_int(void){
 	set_high_vector(false);
+	extern void *vector_table;
+	CP15_SET_VBAR((uint32_t) &vector_table);
 
 	gicd_init();
 	gicc_init();
 	gicc_set_priority(TMIN_INTPRI);
-	enable_irq();
 
-	extern void *vector_table;
-	CP15_SET_VBAR((uint32_t) &vector_table);
+	enable_irq();
 }
 
 void
 init_int_push(void){
+	*(volatile uint16_t*)(ICR1) = (0x03 << 10);
+
 	gicd_set_priority(TOPPERS_INTID_IRQ5, 10);
 	gicd_set_target(TOPPERS_INTID_IRQ5, 1);
 	gicd_config(TOPPERS_INTID_IRQ5, false, true);
 	gicd_clear_pending(TOPPERS_INTID_IRQ5);
 	gicd_enable_int(TOPPERS_INTID_IRQ5);
-	*(volatile uint16_t*)(ICR1) = (0x03 << 10);
 }
 
 uint8_t
@@ -108,7 +109,8 @@ irq_handler_c(void) {
 	set_led_user(get_push());
 	gicd_clear_pending(TOPPERS_INTID_IRQ5);
 	gicc_end_int(icciar);
-	*(volatile uint16_t*)IRQRR =  0x00;
+	*(volatile uint16_t*)IRQRR =  
+	  *(volatile uint16_t*)IRQRR & ~(1<<5);
 }
 
 void
