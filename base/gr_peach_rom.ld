@@ -1,64 +1,52 @@
-
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm") 
 OUTPUT_ARCH(arm)
-STARTUP(start.o)
-
 PROVIDE(hardware_init_hook = 0);
 PROVIDE(software_init_hook = 0);
 PROVIDE(software_term_hook = 0);
-
 ENTRY(start);
-
 MEMORY
 {
   BOOT_LOADER (rx) : ORIGIN = 0x18000000, LENGTH = 0x00004000 
   FLASH (rx) : ORIGIN = 0x18004000, LENGTH = 0x07FFC000 
   SRAM (xrw)    : ORIGIN = 0x20000000, LENGTH = 10M
 }
-
-
 SECTIONS
 {
     .boot :
     {
         KEEP(*(.boot_loader)) 
     } > BOOT_LOADER 
-
     .text :
     {
         Image$$VECTORS$$Base = .;
         * (RESET)
         Image$$VECTORS$$Limit = .;
         . += 0x00000400;
-
         __text = . ;
-      	__vector_start = .	;
-    	PROVIDE (_vector_start = .);
+        __vector_start = .  ;
+        PROVIDE (_vector_start = .);
         *(vector)
         start.o(.text*)
         *(.ivt)
         *(.boot_data)
         *(.dcd)
-	    . = ALIGN(32);
+        . = ALIGN(32);
         *(.text*)
         *(.glue_7t)
         *(.glue_7)
     } >FLASH
-
-	.ARM.extab : 
-	{
-		*(.ARM.extab* .gnu.linkonce.armextab.*)
-	} >FLASH
-
-	__exidx_start = .;
-	.ARM.exidx :
-	{
-		*(.ARM.exidx* .gnu.linkonce.armexidx.*)
-	} >FLASH
-	__exidx_end = .;
-
-    _etext = .	;
-    PROVIDE (etext = .)	;
+    .ARM.extab : 
+    {
+        *(.ARM.extab* .gnu.linkonce.armextab.*)
+    } >FLASH
+    __exidx_start = .;
+    .ARM.exidx :
+    {
+        *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+    } >FLASH
+    __exidx_end = .;
+    _etext = .  ;
+    PROVIDE (etext = .) ;
     .rodata : 
     { 
        *(.rodata*) 
@@ -67,7 +55,6 @@ SECTIONS
     } >FLASH
     __rom_size = . + SIZEOF(.data) - __text;
     PROVIDE (_rom_size = . + SIZEOF(.data) - __text);
-
     . = ALIGN(4);
     .data   :  AT(__rodata_end) 
     {
@@ -76,40 +63,40 @@ SECTIONS
     }>SRAM
     __idata_start = LOADADDR(.data);
     __idata_end = __idata_start + SIZEOF(.data);
-
     _edata  =  . ;
     PROVIDE (edata = .);
-
     .bss       :
     {
-      __bss_start = .	;
+      __bss_start = .   ;
       *(.bss*)
       *(COMMON)
    . = ALIGN(32 / 8);
     }>SRAM
-
    . = ALIGN(32 / 8);
-     _end = .		;
+     _end = .       ;
     __bss_end = .;
-    PROVIDE (end = .)	;
+    . = ALIGN(32 / 4);
+    .stack : 
+    {
+        . += 0x4000;      /* Stack Size */    
+        _stack_init = .;
+        . += +0x4000;     /* Stack Size */    
+        _irq_stack_init = .;
+    }> SRAM
+    PROVIDE (end = .)   ;
     .comment 0 : { *(.comment) }
-
   /* DWARF debug sections.
      Symbols in the DWARF debugging sections are relative to 
      the beginning of the section so we begin them at 0.  */
-
   /* DWARF 1 */
   .debug          0 : { *(.debug) }
   .line           0 : { *(.line) }
-
   /* GNU DWARF 1 extensions */
   .debug_srcinfo  0 : { *(.debug_srcinfo) }
   .debug_sfnames  0 : { *(.debug_sfnames) }
-
   /* DWARF 1.1 and DWARF 2 */
   .debug_aranges  0 : { *(.debug_aranges) }
   .debug_pubnames 0 : { *(.debug_pubnames) }
-
   /* DWARF 2 */
   .debug_info     0 : { *(.debug_info) }
   .debug_abbrev   0 : { *(.debug_abbrev) }
@@ -118,7 +105,6 @@ SECTIONS
   .debug_str      0 : { *(.debug_str) }
   .debug_loc      0 : { *(.debug_loc) }
   .debug_macinfo  0 : { *(.debug_macinfo) }
-
   /* SGI/MIPS DWARF 2 extensions */
   .debug_weaknames 0 : { *(.debug_weaknames) }
   .debug_funcnames 0 : { *(.debug_funcnames) }
